@@ -1,13 +1,53 @@
 // MicroCMS連携用の型定義
 
+export interface SiteSettings {
+  heroSubtitle: string;
+  heroBgImage?: { url: string; width: number; height: number };
+  aboutTitle: string;
+  menuTitle: string;
+  staffTitle: string;
+  galleryTitle: string;
+  accessTitle: string;
+}
+
+export interface AboutContent {
+  content: string;
+  image?: {
+    url: string;
+    width: number;
+    height: number;
+  };
+}
+
+export interface MenuItemCMS {
+  fieldId?: string;
+  title: string;
+  price: string;
+  comment?: string;
+  image?: {
+    url: string;
+    width: number;
+    height: number;
+  };
+}
+
+export interface MenuCategoryCMS {
+  id: string;
+  categoryKey: string;
+  categoryTitle: string;
+  order?: number;
+  items: MenuItemCMS[];
+}
+
 export interface RankingCourse {
   id: string;
-  rank: number; // 1, 2, 3
+  rank: number;
   title: string;
   price: string;
   description: string;
-  image: string;
-  categoryKey?: string; // メニューカテゴリーと紐付け用
+  categoryKey?: string;
+  comment?: string;
+  image?: string;
 }
 
 export interface MenuItem {
@@ -30,6 +70,18 @@ export interface StaffMember {
   role: string;
   specialty: string;
   comment?: string;
-  photo?: string; // URL（public/image/ のローカルパス or MicroCMS CDN URL）
+  photo?: string;
   order?: number;
+}
+
+export interface AccessInfo {
+  tel: string;
+  address: string;
+  directions: string;
+  hours: string;
+  regularHoliday: string;
+  payment: string;
+  notes: string;
+  mapEmbedSrc: string;
+  mapLink: string;
 }

@@ -45,6 +45,8 @@ function ImagePlaceholder({ height = 260 }: { height?: number }) {
 export default function RankingCarousel({ courses }: Props) {
   const sorted = [...courses].sort((a, b) => a.rank - b.rank);
 
+  if (sorted.length === 0) return null;
+
   const [isDesktop, setIsDesktop]   = useState(false);
   const [idx, setIdx]               = useState(0);
   const [phase, setPhase]           = useState<"idle" | "exit" | "enter">("idle");

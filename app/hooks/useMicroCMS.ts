@@ -1,93 +1,142 @@
 import { useState, useEffect } from "react";
-import { RankingCourse, StaffMember } from "../types";
+import { RankingCourse, StaffMember, SiteSettings, AboutContent, MenuCategoryCMS, AccessInfo } from "../types";
+import { siteSettingsDefault } from "../data/siteSettingsDefault";
+import { aboutDefault } from "../data/aboutDefault";
+import { menuCategoriesCMSDefault } from "../data/menuCategoriesCMS";
+import { accessDefault } from "../data/accessDefault";
+import { rankingCourses as rankingCoursesDefault } from "../data/rankingCourses";
 
-// MicroCMS APIクライアント設定
 const MICROCMS_API_KEY = process.env.NEXT_PUBLIC_MICROCMS_API_KEY || "";
 const MICROCMS_SERVICE_DOMAIN = process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN || "";
 
-// ランキングコースを取得
-export function useRankingCourses() {
-  const [courses, setCourses] = useState<RankingCourse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    // 開発中は静的データを使用
-    if (!MICROCMS_API_KEY || !MICROCMS_SERVICE_DOMAIN) {
-      // フォールバック: 静的データをインポート
-      import("../data/rankingCourses").then(module => {
-        setCourses(module.rankingCourses);
-        setLoading(false);
-      });
-      return;
-    }
-
-    // MicroCMSからデータ取得
-    fetch(`https://${MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/ranking-courses?orders=-rank`, {
-      headers: {
-        "X-MICROCMS-API-KEY": MICROCMS_API_KEY,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
-        setCourses(data.contents);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err);
-        setLoading(false);
-        // エラー時はフォールバック
-        import("../data/rankingCourses").then(module => {
-          setCourses(module.rankingCourses);
-        });
-      });
-  }, []);
-
-  return { courses, loading, error };
+function apiUrl(endpoint: string) {
+  return `https://${MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/${endpoint}`;
 }
 
-// メニューカテゴリーを取得
-export function useMenuCategories() {
-  const [categories, setCategories] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const headers = () => ({ "X-MICROCMS-API-KEY": MICROCMS_API_KEY });
+
+const isCmsReady = () => !!(MICROCMS_API_KEY && MICROCMS_SERVICE_DOMAIN);
+
+// ─── サイト設定 ──────────────────────────────────────────────
+export function useSiteSettings() {
+  const [settings, setSettings] = useState<SiteSettings>(siteSettingsDefault);
 
   useEffect(() => {
-    if (!MICROCMS_API_KEY || !MICROCMS_SERVICE_DOMAIN) {
-      import("../data/menuCategories").then(module => {
-        setCategories(module.menuCategories);
-        setLoading(false);
-      });
+    if (!isCmsReady()) return;
+    fetch(apiUrl("site-settings"), { headers: headers() })
+      .then(res => res.json())
+      .then(data => {
+        setSettings({
+          heroSubtitle: data.heroSubtitle ?? siteSettingsDefault.heroSubtitle,
+          heroBgImage: data.heroBgImage ?? undefined,
+          aboutTitle: data.aboutTitle ?? siteSettingsDefault.aboutTitle,
+          menuTitle: data.menuTitle ?? siteSettingsDefault.menuTitle,
+          staffTitle: data.staffTitle ?? siteSettingsDefault.staffTitle,
+          galleryTitle: data.galleryTitle ?? siteSettingsDefault.galleryTitle,
+          accessTitle: data.accessTitle ?? siteSettingsDefault.accessTitle,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  return { settings };
+}
+
+// ─── Aboutコンテンツ ──────────────────────────────────────────
+export function useAbout() {
+  const [about, setAbout] = useState<AboutContent>(aboutDefault);
+
+  useEffect(() => {
+    if (!isCmsReady()) return;
+    fetch(apiUrl("about"), { headers: headers() })
+      .then(res => res.json())
+      .then(data => {
+        setAbout({
+          content: data.content ?? aboutDefault.content,
+          image: data.image ?? undefined,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  return { about };
+}
+
+// ─── メニューカテゴリー ───────────────────────────────────────
+export function useMenuCategoriesCMS() {
+  const [menuCats, setMenuCats] = useState<MenuCategoryCMS[]>(menuCategoriesCMSDefault);
+
+  useEffect(() => {
+    if (!isCmsReady()) return;
+    fetch(apiUrl("menu?orders=order&limit=100"), { headers: headers() })
+      .then(res => res.json())
+      .then(data => {
+        const cats: MenuCategoryCMS[] = (data.contents ?? []).map((c: any) => ({
+          id: c.id,
+          categoryKey: c.categoryKey ?? c.id,
+          categoryTitle: c.categoryTitle,
+          order: c.order,
+          items: (c.items ?? []).map((item: any) => ({
+            fieldId: item.fieldId,
+            title: item.title,
+            price: item.price,
+            comment: item.comment ?? undefined,
+            image: item.image ?? undefined,
+          })),
+        }));
+        if (cats.length > 0) setMenuCats(cats);
+      })
+      .catch(() => {});
+  }, []);
+
+  return { menuCats };
+}
+
+// ─── ランキングコース ─────────────────────────────────────────
+export function useRankingCourses() {
+  const [courses, setCourses] = useState<RankingCourse[]>(rankingCoursesDefault);
+  const [loading, setLoading] = useState(!isCmsReady());
+
+  useEffect(() => {
+    if (!isCmsReady()) {
+      setLoading(false);
       return;
     }
 
-    fetch(`https://${MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/menu-categories`, {
-      headers: {
-        "X-MICROCMS-API-KEY": MICROCMS_API_KEY,
-      },
-    })
+    fetch(apiUrl("ranking?orders=rank"), { headers: headers() })
       .then(res => res.json())
       .then(data => {
-        setCategories(data.contents);
+        const normalized: RankingCourse[] = (data.contents ?? []).map((c: any) => ({
+          id: c.id,
+          rank: c.rank,
+          title: c.title,
+          price: c.price,
+          description: c.description ?? "",
+          categoryKey: c.categoryKey ?? undefined,
+          comment: c.comment ?? undefined,
+          image: typeof c.image === "string" ? c.image : c.image?.url ?? undefined,
+        }));
+        if (normalized.length > 0) setCourses(normalized);
         setLoading(false);
       })
       .catch(() => {
-        import("../data/menuCategories").then(module => {
-          setCategories(module.menuCategories);
+        import("../data/rankingCourses").then(module => {
+          setCourses(module.rankingCourses);
           setLoading(false);
         });
       });
   }, []);
 
-  return { categories, loading };
+  return { courses, loading };
 }
 
-// スタッフ一覧を取得
+// ─── スタッフ ────────────────────────────────────────────────
 export function useStaff() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!MICROCMS_API_KEY || !MICROCMS_SERVICE_DOMAIN) {
+    if (!isCmsReady()) {
       import("../data/staffMembers").then(module => {
         setStaff(module.staffMembers);
         setLoading(false);
@@ -95,17 +144,14 @@ export function useStaff() {
       return;
     }
 
-    fetch(`https://${MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1/staff?orders=order`, {
-      headers: { "X-MICROCMS-API-KEY": MICROCMS_API_KEY },
-    })
+    fetch(apiUrl("staff?orders=order"), { headers: headers() })
       .then(res => res.json())
       .then(data => {
-        // MicroCMSの画像フィールドは { url, height, width } 形式なので url を取り出す
-        const normalized: StaffMember[] = data.contents.map((s: any) => ({
+        const normalized: StaffMember[] = (data.contents ?? []).map((s: any) => ({
           ...s,
-          photo: s.photo?.url ?? s.photo ?? "",
+          photo: typeof s.photo === "string" ? s.photo : s.photo?.url ?? "",
         }));
-        setStaff(normalized);
+        if (normalized.length > 0) setStaff(normalized);
         setLoading(false);
       })
       .catch(() => {
@@ -117,4 +163,31 @@ export function useStaff() {
   }, []);
 
   return { staff, loading };
+}
+
+// ─── アクセス情報（site-settings に統合） ───────────────────
+export function useAccess() {
+  const [access, setAccess] = useState<AccessInfo>(accessDefault);
+
+  useEffect(() => {
+    if (!isCmsReady()) return;
+    fetch(apiUrl("site-settings"), { headers: headers() })
+      .then(res => res.json())
+      .then(data => {
+        setAccess({
+          tel: data.tel ?? accessDefault.tel,
+          address: data.address ?? accessDefault.address,
+          directions: data.directions ?? accessDefault.directions,
+          hours: data.hours ?? accessDefault.hours,
+          regularHoliday: data.regularHoliday ?? accessDefault.regularHoliday,
+          payment: data.payment ?? accessDefault.payment,
+          notes: data.notes ?? accessDefault.notes,
+          mapEmbedSrc: data.mapEmbedSrc ?? accessDefault.mapEmbedSrc,
+          mapLink: data.mapLink ?? accessDefault.mapLink,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  return { access };
 }
