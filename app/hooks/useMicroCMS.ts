@@ -5,6 +5,7 @@ import { aboutDefault } from "../data/aboutDefault";
 import { menuCategoriesCMSDefault } from "../data/menuCategoriesCMS";
 import { accessDefault } from "../data/accessDefault";
 import { rankingCourses as rankingCoursesDefault } from "../data/rankingCourses";
+import { staffMembers as staffMembersDefault } from "../data/staffMembers";
 
 const MICROCMS_API_KEY = process.env.NEXT_PUBLIC_MICROCMS_API_KEY || "";
 const MICROCMS_SERVICE_DOMAIN = process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN || "";
@@ -132,15 +133,12 @@ export function useRankingCourses() {
 
 // ─── スタッフ ────────────────────────────────────────────────
 export function useStaff() {
-  const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [staff, setStaff] = useState<StaffMember[]>(staffMembersDefault);
+  const [loading, setLoading] = useState(!isCmsReady());
 
   useEffect(() => {
     if (!isCmsReady()) {
-      import("../data/staffMembers").then(module => {
-        setStaff(module.staffMembers);
-        setLoading(false);
-      });
+      setLoading(false);
       return;
     }
 
@@ -154,12 +152,7 @@ export function useStaff() {
         if (normalized.length > 0) setStaff(normalized);
         setLoading(false);
       })
-      .catch(() => {
-        import("../data/staffMembers").then(module => {
-          setStaff(module.staffMembers);
-          setLoading(false);
-        });
-      });
+      .catch(() => { setLoading(false); });
   }, []);
 
   return { staff, loading };
