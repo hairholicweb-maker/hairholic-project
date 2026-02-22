@@ -899,7 +899,7 @@ export default function Page() {
               }}
               aria-label={mobileMenuOpen ? "メニューを閉じる" : "メニューを開く"}
               aria-expanded={mobileMenuOpen}
-              className="hamburger-btn relative bg-transparent border-0 cursor-pointer z-[1100] lg:hidden"
+              className="hamburger-btn relative bg-transparent border-0 cursor-pointer z-[1100] lg:hidden mr-3"
               style={{ width: "36px", height: "36px" }}
             >
               {/* Top line */}
@@ -1005,7 +1005,7 @@ export default function Page() {
               pendingScrollRef.current = "reservation";
               setMobileMenuOpen(false);
             }}
-            className="block py-4 w-full max-w-xs text-center bg-primary text-primary-foreground no-underline text-xs font-semibold tracking-[0.2em] uppercase"
+            className="block py-4 w-full max-w-xs text-center bg-primary text-primary-foreground no-underline text-xs font-semibold tracking-[0.2em] uppercase mx-auto"
           >
             ご予約はこちら
           </a>
