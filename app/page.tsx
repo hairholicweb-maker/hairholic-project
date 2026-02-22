@@ -1015,7 +1015,7 @@ export default function Page() {
       <main ref={mainRef}>
 
         {/* ─── HERO ─────────────────────────────────── */}
-        <section className="relative h-screen w-full overflow-hidden bg-background">
+        <section id="hero" className="relative h-screen w-full overflow-hidden bg-background">
           {/* JS パララックス背景 */}
           <div
             ref={heroBgRef}
