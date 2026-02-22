@@ -1283,7 +1283,7 @@ export default function Page() {
                                       ))}
                                     </span>
                                     <span className="flex-1 border-b border-dotted border-border/40 mb-1 min-w-8" />
-                                    <span className="text-primary whitespace-nowrap shrink-0" style={{ fontFamily: "var(--font-cormorant), serif", fontSize: "1.3rem", fontWeight: 600, letterSpacing: "0.03em" }}>
+                                    <span className="text-primary whitespace-nowrap shrink-0" style={{ fontFamily: "var(--font-cormorant), serif", fontSize: "1.05rem", fontWeight: 400, letterSpacing: "0.03em" }}>
                                       {item.price}
                                     </span>
                                   </div>
