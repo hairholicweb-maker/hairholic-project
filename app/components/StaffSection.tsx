@@ -166,8 +166,9 @@ export default function StaffSection({ staff }: Props) {
     let introPlayed = false;
     try { introPlayed = sessionStorage.getItem('hairholic_intro') === '1'; } catch {}
 
+    // 再訪問時 or 初期表示スキップ：即時表示
     if (introPlayed) {
-      cards.forEach(c => gsap.set(c, { opacity: 1 }));
+      cards.forEach(c => gsap.set(c, { opacity: 1, y: 0 }));
       return;
     }
 
@@ -184,11 +185,33 @@ export default function StaffSection({ staff }: Props) {
           obs.unobserve(el);
         });
       },
-      { threshold: 0.08 }
+      { threshold: 0, rootMargin: "0px 0px 60px 0px" }
     );
 
-    cards.forEach(c => { gsap.set(c, { opacity: 0 }); obs.observe(c); });
-    return () => obs.disconnect();
+    cards.forEach(c => {
+      const rect = c.getBoundingClientRect();
+      const alreadyVisible = rect.top < window.innerHeight && rect.bottom > 0;
+      if (alreadyVisible) {
+        // すでにビューポート内にある場合は即時アニメーション
+        const i = parseInt((c as HTMLElement).dataset.staffCard || "0");
+        gsap.fromTo(c,
+          { opacity: 0, y: 32 },
+          { opacity: 1, y: 0, duration: 0.75, delay: i * 0.1, ease: "power3.out" }
+        );
+      } else {
+        gsap.set(c, { opacity: 0, y: 32 });
+        obs.observe(c);
+      }
+    });
+
+    // フォールバック：1.5秒後も非表示なら強制表示
+    const fallback = setTimeout(() => {
+      cards.forEach(c => {
+        gsap.set(c, { opacity: 1, y: 0 });
+      });
+    }, 1500);
+
+    return () => { obs.disconnect(); clearTimeout(fallback); };
   }, [staff]);
 
   if (staff.length === 0) return null;
