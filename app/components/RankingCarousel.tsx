@@ -227,7 +227,7 @@ export default function RankingCarousel({ courses }: Props) {
           fontWeight: 600,
           textTransform: "uppercase",
           marginBottom: "4px",
-        }}>Ranking</div>
+        }}>Featured</div>
         <h3 style={{
           fontFamily: "var(--font-heading), serif",
           fontSize: "clamp(1.2rem, 2.5vw, 1.5rem)",
@@ -235,7 +235,7 @@ export default function RankingCarousel({ courses }: Props) {
           letterSpacing: "0.02em",
           color: "#f5f5f5",
           margin: 0,
-        }}>人気TOP3</h3>
+        }}>おすすめ</h3>
       </div>
     </div>
   );
@@ -259,7 +259,6 @@ export default function RankingCarousel({ courses }: Props) {
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
           gap: "20px",
-          alignItems: "start",
         }}>
           {sorted.map((course, i) => {
             const rankColor = i === 0 ? "#d4af37" : i === 1 ? "#b0b8c1" : "#a0785a";

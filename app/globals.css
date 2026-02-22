@@ -87,10 +87,16 @@
 @layer components {
   /* スクロール後ヘッダー背景 */
   header.header-scrolled {
-    background-color: oklch(0.13 0.005 60 / 0.78) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border-bottom-color: oklch(0.28 0.01 60) !important; /* border は常在、color だけ変える */
+    background-color: oklch(0.13 0.005 60 / 0.92) !important;
+    border-bottom-color: oklch(0.28 0.01 60) !important;
+  }
+  /* PC のみ blur（モバイルでは高負荷のため除外） */
+  @media (hover: hover) {
+    header.header-scrolled {
+      background-color: oklch(0.13 0.005 60 / 0.78) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+    }
   }
 
   /* コンテナ（レガシー） */
@@ -106,14 +112,17 @@
    ───────────────────────────────────────────────────── */
 @layer utilities {
   /* 奥行き / パララックス */
-  [data-menu-row],
-  [data-staff-card] > div,
-  .gallery-item {
-    transform-style: preserve-3d;
-  }
+  /* 3D tilt は hover デバイス（PC）のみ有効 */
+  @media (hover: hover) {
+    [data-menu-row],
+    [data-staff-card] > div,
+    .gallery-item {
+      transform-style: preserve-3d;
+    }
 
-  [data-menu-row]:hover {
-    transform: perspective(900px) translateY(-2px);
+    [data-menu-row]:hover {
+      transform: perspective(900px) translateY(-2px);
+    }
   }
 
   /* レガシーカラーユーティリティ */

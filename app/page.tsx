@@ -387,55 +387,50 @@ export default function Page() {
   useEffect(() => {
     const targets = Array.from(document.querySelectorAll("[data-reveal]")) as HTMLElement[];
 
+    const isMobile = !window.matchMedia("(hover: hover)").matches;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
           const el = entry.target as HTMLElement;
-          const delay = parseFloat(el.dataset.revealDelay || "0");
+          const delay = parseFloat(el.dataset.revealDelay || "0") * (isMobile ? 0.5 : 1);
           const dir = el.dataset.revealDir || "";
           const tag = el.tagName.toLowerCase();
           const isHeading = /^h[1-6]$/.test(tag);
           const isLabel = tag === "span";
 
           if (isHeading) {
-            // セクションタイトル：opacity + y（高さ0でも確実に発火）
             gsap.fromTo(el,
-              { opacity: 0, y: 18 },
-              { opacity: 1, y: 0, duration: 1.3, delay, ease: "power4.out" }
+              { opacity: 0, y: isMobile ? 10 : 18 },
+              { opacity: 1, y: 0, duration: isMobile ? 0.6 : 1.3, delay, ease: "power3.out" }
             );
           } else if (isLabel) {
-            // セクションラベル：opacity フェード
             gsap.fromTo(el,
               { opacity: 0, y: -4 },
-              { opacity: 1, y: 0, duration: 0.9, delay, ease: "power3.out" }
+              { opacity: 1, y: 0, duration: isMobile ? 0.45 : 0.9, delay, ease: "power3.out" }
             );
           } else if (dir === "right") {
-            // 画像：opacity + カーテン + 微ズームアウト
-            gsap.to(el, {
-              opacity: 1,
-              clipPath: "inset(0 0 0% 0)",
-              scale: 1.0,
-              duration: 1.5,
-              delay,
-              ease: "power3.inOut",
-              onComplete: () => { gsap.set(el, { clearProps: "clipPath,scale" }); },
-            });
+            if (isMobile) {
+              // SP：シンプルフェード（clipPath/scale なし）
+              gsap.to(el, { opacity: 1, duration: 0.5, delay, ease: "power2.out",
+                onComplete: () => { gsap.set(el, { clearProps: "clipPath,scale" }); } });
+            } else {
+              gsap.to(el, {
+                opacity: 1, clipPath: "inset(0 0 0% 0)", scale: 1.0,
+                duration: 1.5, delay, ease: "power3.inOut",
+                onComplete: () => { gsap.set(el, { clearProps: "clipPath,scale" }); },
+              });
+            }
           } else if (dir === "left") {
             gsap.to(el, {
-              opacity: 1,
-              x: 0,
-              duration: 1.2,
-              delay,
-              ease: "power3.out",
+              opacity: 1, x: 0,
+              duration: isMobile ? 0.5 : 1.2, delay, ease: "power3.out",
             });
           } else {
             gsap.to(el, {
-              opacity: 1,
-              y: 0,
-              duration: 1.1,
-              delay,
-              ease: "power3.out",
+              opacity: 1, y: 0,
+              duration: isMobile ? 0.5 : 1.1, delay, ease: "power3.out",
             });
           }
           observer.unobserve(el);
@@ -451,7 +446,7 @@ export default function Page() {
       if (isHeading || isLabel) {
         gsap.set(el, { opacity: 0 });
       } else if (dir === "right") {
-        gsap.set(el, { opacity: 0, clipPath: "inset(0 0 100% 0)", scale: 1.06 });
+        gsap.set(el, isMobile ? { opacity: 0 } : { opacity: 0, clipPath: "inset(0 0 100% 0)", scale: 1.06 });
       } else if (dir === "left") {
         gsap.set(el, { opacity: 0, x: -24 });
       } else {
@@ -521,33 +516,49 @@ export default function Page() {
     const container = galleryGridRef.current;
     if (items.length === 0 || !container) return;
 
-    items.forEach(item => gsap.set(item, { opacity: 0, clipPath: "inset(0 0 100% 0)", scale: 1.06 }));
+    const isMobile = !window.matchMedia("(hover: hover)").matches;
+
+    if (isMobile) {
+      // SP：軽量フェードのみ
+      items.forEach(item => gsap.set(item, { opacity: 0 }));
+    } else {
+      items.forEach(item => gsap.set(item, { opacity: 0, clipPath: "inset(0 0 100% 0)", scale: 1.06 }));
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
           observer.unobserve(entry.target);
-          const tl = gsap.timeline();
-          if (items[0]) {
-            tl.to(items[0], {
-              opacity: 1, clipPath: "inset(0 0 0% 0)", scale: 1.0,
-              duration: 1.3, ease: "power3.inOut",
-              onComplete: () => { gsap.set(items[0], { clearProps: "clipPath,scale" }); },
+          if (isMobile) {
+            gsap.to(items, {
+              opacity: 1,
+              duration: 0.5,
+              stagger: { each: 0.07, from: "start" },
+              ease: "power2.out",
             });
-          }
-          if (items.length > 1) {
-            tl.to(
-              items.slice(1),
-              {
+          } else {
+            const tl = gsap.timeline();
+            if (items[0]) {
+              tl.to(items[0], {
                 opacity: 1, clipPath: "inset(0 0 0% 0)", scale: 1.0,
-                duration: 0.95,
-                stagger: { each: 0.08, from: "start" },
-                ease: "power3.inOut",
-                onComplete: () => { items.slice(1).forEach(it => gsap.set(it, { clearProps: "clipPath,scale" })); },
-              },
-              "-=0.55"
-            );
+                duration: 1.3, ease: "power3.inOut",
+                onComplete: () => { gsap.set(items[0], { clearProps: "clipPath,scale" }); },
+              });
+            }
+            if (items.length > 1) {
+              tl.to(
+                items.slice(1),
+                {
+                  opacity: 1, clipPath: "inset(0 0 0% 0)", scale: 1.0,
+                  duration: 0.95,
+                  stagger: { each: 0.08, from: "start" },
+                  ease: "power3.inOut",
+                  onComplete: () => { items.slice(1).forEach(it => gsap.set(it, { clearProps: "clipPath,scale" })); },
+                },
+                "-=0.55"
+              );
+            }
           }
         });
       },
@@ -560,7 +571,7 @@ export default function Page() {
     requestAnimationFrame(() => {
       if (container.getBoundingClientRect().bottom < 0) {
         observer.unobserve(container);
-        items.forEach(item => gsap.set(item, { clearProps: "opacity,clipPath,scale" }));
+        items.forEach(item => gsap.set(item, { clearProps: isMobile ? "opacity" : "opacity,clipPath,scale" }));
       }
     });
 
@@ -623,23 +634,29 @@ export default function Page() {
     const bg = heroBgRef.current;
     if (!bg) return;
 
-    // スクロール → Y 軸移動
-    const onScroll = () => {
-      gsap.set(bg, { y: window.scrollY * 0.18 });
-    };
+    const isPC = window.matchMedia("(hover: hover)").matches;
 
-    // マウス → X 軸微移動（ヒーロー表示中のみ）
-    const onMouse = (e: MouseEvent) => {
-      if (window.scrollY > window.innerHeight * 0.8) return;
-      const dx = ((e.clientX - window.innerWidth / 2) / window.innerWidth) * 2;
-      gsap.to(bg, { x: dx * 14, duration: 2.0, ease: "power2.out" });
-    };
+    // スクロール → Y 軸移動（PC のみ：SP ではスクロール中の JS 実行を排除）
+    let onScroll: (() => void) | null = null;
+    if (isPC) {
+      onScroll = () => { gsap.set(bg, { y: window.scrollY * 0.18 }); };
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("mousemove", onMouse);
+    // マウス → X 軸微移動（PC のみ）
+    let onMouse: ((e: MouseEvent) => void) | null = null;
+    if (isPC) {
+      onMouse = (e: MouseEvent) => {
+        if (window.scrollY > window.innerHeight * 0.8) return;
+        const dx = ((e.clientX - window.innerWidth / 2) / window.innerWidth) * 2;
+        gsap.to(bg, { x: dx * 14, duration: 2.0, ease: "power2.out" });
+      };
+      window.addEventListener("mousemove", onMouse);
+    }
+
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("mousemove", onMouse);
+      if (onScroll) window.removeEventListener("scroll", onScroll);
+      if (onMouse) window.removeEventListener("mousemove", onMouse);
     };
   }, []);
 
@@ -675,6 +692,8 @@ export default function Page() {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
+    const isMobile = !window.matchMedia("(hover: hover)").matches;
+
     let introPlayed = false;
     try { introPlayed = sessionStorage.getItem('hairholic_intro') === '1'; } catch {}
 
@@ -685,23 +704,23 @@ export default function Page() {
     // ── GSAP ScrollTrigger アニメーション ──
     const ctx = gsap.context(() => {
 
-      // 1-1. Hero 背景ズームアウト（初回訪問のみ）
-      if (!introPlayed && heroBgRef.current) {
+      // 1-1. Hero 背景ズームアウト（初回訪問かつPC のみ）
+      if (!introPlayed && !isMobile && heroBgRef.current) {
         gsap.fromTo(heroBgRef.current,
           { scale: 1.12 },
           { scale: 1, duration: 2.5, ease: "power2.out", delay: 0.5 }
         );
       }
 
-      // 1-3. Hero スクロールフェードアウト
+      // 1-3. Hero スクロールフェードアウト（SP は opacity のみ・scale は省略）
       gsap.to("#hero", {
         opacity: 0,
-        scale: 0.97,
+        ...(isMobile ? {} : { scale: 0.97 }),
         scrollTrigger: {
           trigger: "#hero",
           start: "65% top",
           end: "bottom top",
-          scrub: true,
+          scrub: isMobile ? 1 : 0.5,
         },
       });
 
@@ -728,63 +747,67 @@ export default function Page() {
       });
     });
 
-    // 4-1. スタッフカード 3D チルト（イベントデリゲーション）
-    let activeCard: HTMLElement | null = null;
-    const onDocMove = (e: MouseEvent) => {
-      const card = (e.target as HTMLElement).closest("[data-staff-card]") as HTMLElement | null;
-      if (card) {
-        activeCard = card;
-        const rect = card.getBoundingClientRect();
-        const cx = (e.clientX - rect.left) / rect.width - 0.5;
-        const cy = (e.clientY - rect.top) / rect.height - 0.5;
-        gsap.to(card, {
-          rotateY: cx * 7, rotateX: -cy * 7,
-          transformPerspective: 900, duration: 0.35, ease: "power2.out",
-        });
-      } else if (activeCard) {
-        gsap.to(activeCard, {
-          rotateX: 0, rotateY: 0, duration: 0.6,
-          ease: "elastic.out(1, 0.5)", clearProps: "transform",
-        });
-        activeCard = null;
-      }
-    };
-    document.addEventListener("mousemove", onDocMove);
-    cleanups.push(() => document.removeEventListener("mousemove", onDocMove));
+    // 4-1. スタッフカード 3D チルト（PC のみ）
+    if (!isMobile) {
+      let activeCard: HTMLElement | null = null;
+      const onDocMove = (e: MouseEvent) => {
+        const card = (e.target as HTMLElement).closest("[data-staff-card]") as HTMLElement | null;
+        if (card) {
+          activeCard = card;
+          const rect = card.getBoundingClientRect();
+          const cx = (e.clientX - rect.left) / rect.width - 0.5;
+          const cy = (e.clientY - rect.top) / rect.height - 0.5;
+          gsap.to(card, {
+            rotateY: cx * 7, rotateX: -cy * 7,
+            transformPerspective: 900, duration: 0.35, ease: "power2.out",
+          });
+        } else if (activeCard) {
+          gsap.to(activeCard, {
+            rotateX: 0, rotateY: 0, duration: 0.6,
+            ease: "elastic.out(1, 0.5)", clearProps: "transform",
+          });
+          activeCard = null;
+        }
+      };
+      document.addEventListener("mousemove", onDocMove);
+      cleanups.push(() => document.removeEventListener("mousemove", onDocMove));
+    }
 
-    // 10. カスタムカーソル
-    const cursor = document.querySelector(".custom-cursor") as HTMLElement | null;
-    const cursorDot = document.querySelector(".custom-cursor-dot") as HTMLElement | null;
-    if (cursor && cursorDot) {
-      let initialized = false;
-      const onMove = (e: MouseEvent) => {
-        if (!initialized) {
-          gsap.set([cursor, cursorDot], { opacity: 1 });
-          gsap.set(cursor, { x: e.clientX, y: e.clientY });
-          gsap.set(cursorDot, { x: e.clientX, y: e.clientY });
-          initialized = true;
-        }
-        gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.5, ease: "power3.out" });
-        gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.15, ease: "power2.out" });
-      };
-      const onOver = (e: MouseEvent) => {
-        if ((e.target as HTMLElement).closest("a, button")) {
-          gsap.to(cursor, { scale: 2.5, opacity: 0.5, duration: 0.25 });
-        }
-      };
-      const onOut = (e: MouseEvent) => {
-        if ((e.target as HTMLElement).closest("a, button")) {
-          gsap.to(cursor, { scale: 1, opacity: 1, duration: 0.25 });
-        }
-      };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseover", onOver);
-      document.addEventListener("mouseout", onOut);
-      cleanups.push(
-        () => document.removeEventListener("mousemove", onMove),
-        () => document.removeEventListener("mouseover", onOver),
-        () => document.removeEventListener("mouseout", onOut),
-      );
+    // 10. カスタムカーソル（PC のみ）
+    if (!isMobile) {
+      const cursor = document.querySelector(".custom-cursor") as HTMLElement | null;
+      const cursorDot = document.querySelector(".custom-cursor-dot") as HTMLElement | null;
+      if (cursor && cursorDot) {
+        let initialized = false;
+        const onMove = (e: MouseEvent) => {
+          if (!initialized) {
+            gsap.set([cursor, cursorDot], { opacity: 1 });
+            gsap.set(cursor, { x: e.clientX, y: e.clientY });
+            gsap.set(cursorDot, { x: e.clientX, y: e.clientY });
+            initialized = true;
+          }
+          gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.5, ease: "power3.out" });
+          gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.15, ease: "power2.out" });
+        };
+        const onOver = (e: MouseEvent) => {
+          if ((e.target as HTMLElement).closest("a, button")) {
+            gsap.to(cursor, { scale: 2.5, opacity: 0.5, duration: 0.25 });
+          }
+        };
+        const onOut = (e: MouseEvent) => {
+          if ((e.target as HTMLElement).closest("a, button")) {
+            gsap.to(cursor, { scale: 1, opacity: 1, duration: 0.25 });
+          }
+        };
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseover", onOver);
+        document.addEventListener("mouseout", onOut);
+        cleanups.push(
+          () => document.removeEventListener("mousemove", onMove),
+          () => document.removeEventListener("mouseover", onOver),
+          () => document.removeEventListener("mouseout", onOut),
+        );
+      }
     }
 
     return () => {
@@ -1134,12 +1157,13 @@ export default function Page() {
             }
             @keyframes heroScrollDown {
               0%   { transform: translateY(-100%); opacity: 0; }
-              20%  { opacity: 1; }
-              80%  { opacity: 1; }
+              12%  { opacity: 1; }
+              75%  { opacity: 1; }
+              90%  { opacity: 0; }
               100% { transform: translateY(350%); opacity: 0; }
             }
             .hero-scroll-dot {
-              animation: heroScrollDown 2.4s cubic-bezier(0.76, 0, 0.24, 1) infinite;
+              animation: heroScrollDown 2.2s ease-in-out infinite;
             }
           `}</style>
         </section>
@@ -1259,7 +1283,7 @@ export default function Page() {
                                       ))}
                                     </span>
                                     <span className="flex-1 border-b border-dotted border-border/40 mb-1 min-w-8" />
-                                    <span className="font-serif text-lg text-primary whitespace-nowrap shrink-0">
+                                    <span className="text-primary whitespace-nowrap shrink-0" style={{ fontFamily: "var(--font-cormorant), serif", fontSize: "1.3rem", fontWeight: 600, letterSpacing: "0.03em" }}>
                                       {item.price}
                                     </span>
                                   </div>
