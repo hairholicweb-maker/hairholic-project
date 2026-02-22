@@ -236,12 +236,14 @@ export default function Page() {
         if (headerEl) headerEl.style.paddingRight = `${sw}px`;
       }
 
-      // ── アイコンアニメーション（Open）──
+      // ── アイコンアニメーション（Open → ×）──
+      // 上ライン中心(18,13.5) → ボタン中心(18,18)へ y+4.5 移動しながら45°回転
       if (topLineRef.current) {
-        gsap.to(topLineRef.current, { rotation: 45, transformOrigin: "center center", duration: 0.45, ease: "power2.inOut" });
+        gsap.to(topLineRef.current, { rotation: 45, y: 4.5, scaleX: 1.2, transformOrigin: "center center", duration: 0.45, ease: "power2.inOut" });
       }
+      // 下ライン中心(18,22.5) → ボタン中心(18,18)へ y-4.5 移動しながら-45°回転
       if (bottomLineRef.current) {
-        gsap.to(bottomLineRef.current, { rotation: -45, transformOrigin: "center center", duration: 0.45, ease: "power2.inOut" });
+        gsap.to(bottomLineRef.current, { rotation: -45, y: -4.5, scaleX: 1.2, transformOrigin: "center center", duration: 0.45, ease: "power2.inOut" });
       }
 
       // ── オーバーレイ：クリップパスで右上から展開 ──
@@ -302,12 +304,12 @@ export default function Page() {
       }
 
     } else {
-      // ── アイコンリセット（Close）──
+      // ── アイコンリセット（Close → ハンバーガー）──
       if (topLineRef.current) {
-        gsap.to(topLineRef.current, { rotation: 0, transformOrigin: "center center", duration: 0.4, ease: "power2.inOut" });
+        gsap.to(topLineRef.current, { rotation: 0, y: 0, scaleX: 1, transformOrigin: "center center", duration: 0.4, ease: "power2.inOut" });
       }
       if (bottomLineRef.current) {
-        gsap.to(bottomLineRef.current, { rotation: 0, transformOrigin: "center center", duration: 0.4, ease: "power2.inOut" });
+        gsap.to(bottomLineRef.current, { rotation: 0, y: 0, scaleX: 1, transformOrigin: "center center", duration: 0.4, ease: "power2.inOut" });
       }
 
       // ── 予約ボタン ──
