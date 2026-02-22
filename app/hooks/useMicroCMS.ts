@@ -10,7 +10,7 @@ import { accessDefault } from "../data/accessDefault";
 import { rankingCourses as rankingCoursesDefault } from "../data/rankingCourses";
 import { staffMembers as staffMembersDefault } from "../data/staffMembers";
 
-const MICROCMS_API_KEY      = process.env.NEXT_PUBLIC_MICROCMS_API_KEY      || "";
+const MICROCMS_API_KEY        = process.env.NEXT_PUBLIC_MICROCMS_API_KEY        || "";
 const MICROCMS_SERVICE_DOMAIN = process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN || "";
 
 function apiUrl(endpoint: string) {
@@ -22,11 +22,18 @@ const isCmsReady = () => !!(MICROCMS_API_KEY && MICROCMS_SERVICE_DOMAIN);
 // ─────────────────────────────────────────────────────────────
 // MicroCMS エンドポイント構成
 //
-// [site-settings] オブジェクト型 ─ camelCase フィールド
-//   heroSubtitle, heroBgImage(media)
-//   aboutTitle, menuTitle, staffTitle, galleryTitle, accessTitle
-//   tel, address, directions(textArea), hours, regularHoliday,
-//   payment, notes, mapEmbedSrc, mapLink
+// [top-page] オブジェクト型 ─ snake_case フィールド（全セクション統合）
+//   hero_image(media)        : ヒーロー背景画像
+//   sub_title(media)         : Aboutセクション背景画像
+//   about_text(textArea)     : About本文
+//   about_title(text)        : セクション見出し1
+//   menu_title(text)         : セクション見出し2
+//   staff_title(text)        : セクション見出し3
+//   gallery_title(text)      : セクション見出し4
+//   access_title(text)       : セクション見出し5
+//   tel, address, directions, hours, regular_holiday, payment, notes (text)
+//   map_embed_src, map_link  (text)
+//   staff_list(repeater)     : name, photo(media), role, spacialty?, comment?
 //
 // [menu] リスト型 ─ メニューカテゴリ
 //   categoryKey, categoryTitle, order(number)
@@ -35,29 +42,12 @@ const isCmsReady = () => !!(MICROCMS_API_KEY && MICROCMS_SERVICE_DOMAIN);
 // [ranking] リスト型 ─ ランキング（1〜3位）
 //   rank(number), title, price, description
 //   categoryKey?, comment?, image?(media)
-//
-// [top-page] オブジェクト型 ─ snake_case フィールド
-//   hero_image(media), sub_title(media=About背景画像), about_text(textArea)
-//   staff_list: repeater → name, photo(media), role, spacialty?, comment?
 // ─────────────────────────────────────────────────────────────
 
 // モジュールレベルキャッシュ（同一エンドポイントへのリクエストを1回に抑える）
-let _siteSettingsPromise: Promise<Record<string, unknown>> | null = null;
-let _topPagePromise:      Promise<Record<string, unknown>> | null = null;
-let _menuPromise:         Promise<any[]>                   | null = null;
-let _rankingPromise:      Promise<any[]>                   | null = null;
-
-function fetchSiteSettings(): Promise<Record<string, unknown>> {
-  if (!_siteSettingsPromise) {
-    _siteSettingsPromise = fetch(apiUrl("site-settings"), { headers: headers() })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<Record<string, unknown>>;
-      })
-      .catch(() => ({}));
-  }
-  return _siteSettingsPromise;
-}
+let _topPagePromise: Promise<Record<string, unknown>> | null = null;
+let _menuPromise:    Promise<any[]>                   | null = null;
+let _rankingPromise: Promise<any[]>                   | null = null;
 
 function fetchTopPage(): Promise<Record<string, unknown>> {
   if (!_topPagePromise) {
@@ -98,21 +88,21 @@ function fetchRankingList(): Promise<any[]> {
 }
 
 // ─── サイト設定 ──────────────────────────────────────────────
-// エンドポイント: site-settings（camelCase）
+// エンドポイント: top-page（snake_case）
 export function useSiteSettings() {
   const [settings, setSettings] = useState<SiteSettings>(siteSettingsDefault);
 
   useEffect(() => {
     if (!isCmsReady()) return;
-    fetchSiteSettings().then(d => {
+    fetchTopPage().then(d => {
       setSettings({
-        heroSubtitle: (d.heroSubtitle as string) ?? siteSettingsDefault.heroSubtitle,
-        heroBgImage:  (d.heroBgImage  as SiteSettings["heroBgImage"]) ?? undefined,
-        aboutTitle:   (d.aboutTitle   as string) ?? siteSettingsDefault.aboutTitle,
-        menuTitle:    (d.menuTitle    as string) ?? siteSettingsDefault.menuTitle,
-        staffTitle:   (d.staffTitle   as string) ?? siteSettingsDefault.staffTitle,
-        galleryTitle: (d.galleryTitle as string) ?? siteSettingsDefault.galleryTitle,
-        accessTitle:  (d.accessTitle  as string) ?? siteSettingsDefault.accessTitle,
+        heroSubtitle: siteSettingsDefault.heroSubtitle,
+        heroBgImage:  (d.hero_image    as SiteSettings["heroBgImage"]) ?? undefined,
+        aboutTitle:   (d.about_title   as string) ?? siteSettingsDefault.aboutTitle,
+        menuTitle:    (d.menu_title    as string) ?? siteSettingsDefault.menuTitle,
+        staffTitle:   (d.staff_title   as string) ?? siteSettingsDefault.staffTitle,
+        galleryTitle: (d.gallery_title as string) ?? siteSettingsDefault.galleryTitle,
+        accessTitle:  (d.access_title  as string) ?? siteSettingsDefault.accessTitle,
       });
     });
   }, []);
@@ -149,10 +139,10 @@ export function useMenuCategoriesCMS() {
     fetchMenuList().then(contents => {
       if (contents.length === 0) return;
       const cats: MenuCategoryCMS[] = contents.map((c: any) => ({
-        id:            c.id          ?? c.categoryKey ?? "",
-        categoryKey:   c.categoryKey ?? "",
+        id:            c.id            ?? c.categoryKey ?? "",
+        categoryKey:   c.categoryKey   ?? "",
         categoryTitle: c.categoryTitle ?? "",
-        order:         c.order       ?? 0,
+        order:         c.order         ?? 0,
         items: (c.items ?? []).map((item: any) => ({
           fieldId: item.fieldId ?? item.id ?? undefined,
           title:   item.title   ?? "",
@@ -234,25 +224,25 @@ export function useStaff() {
 }
 
 // ─── アクセス情報 ────────────────────────────────────────────
-// エンドポイント: site-settings（camelCase）
-// フィールド: tel, address, directions, hours, regularHoliday,
-//             payment, notes, mapEmbedSrc, mapLink
+// エンドポイント: top-page（snake_case）
+// フィールド: tel, address, directions, hours, regular_holiday,
+//             payment, notes, map_embed_src, map_link
 export function useAccess() {
   const [access, setAccess] = useState<AccessInfo>(accessDefault);
 
   useEffect(() => {
     if (!isCmsReady()) return;
-    fetchSiteSettings().then(d => {
+    fetchTopPage().then(d => {
       setAccess({
-        tel:            (d.tel            as string) ?? accessDefault.tel,
-        address:        (d.address        as string) ?? accessDefault.address,
-        directions:     (d.directions     as string) ?? accessDefault.directions,
-        hours:          (d.hours          as string) ?? accessDefault.hours,
-        regularHoliday: (d.regularHoliday as string) ?? accessDefault.regularHoliday,
-        payment:        (d.payment        as string) ?? accessDefault.payment,
-        notes:          (d.notes          as string) ?? accessDefault.notes,
-        mapEmbedSrc:    (d.mapEmbedSrc    as string) ?? accessDefault.mapEmbedSrc,
-        mapLink:        (d.mapLink        as string) ?? accessDefault.mapLink,
+        tel:            (d.tel             as string) ?? accessDefault.tel,
+        address:        (d.address         as string) ?? accessDefault.address,
+        directions:     (d.directions      as string) ?? accessDefault.directions,
+        hours:          (d.hours           as string) ?? accessDefault.hours,
+        regularHoliday: (d.regular_holiday as string) ?? accessDefault.regularHoliday,
+        payment:        (d.payment         as string) ?? accessDefault.payment,
+        notes:          (d.notes           as string) ?? accessDefault.notes,
+        mapEmbedSrc:    (d.map_embed_src   as string) ?? accessDefault.mapEmbedSrc,
+        mapLink:        (d.map_link        as string) ?? accessDefault.mapLink,
       });
     });
   }, []);
