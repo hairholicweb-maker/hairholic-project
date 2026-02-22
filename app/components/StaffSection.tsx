@@ -163,55 +163,30 @@ export default function StaffSection({ staff }: Props) {
     if (staff.length === 0) return;
     const cards = Array.from(document.querySelectorAll("[data-staff-card]")) as HTMLElement[];
 
+    // まず全カードを確実に表示状態にする（これが最優先）
+    cards.forEach(c => gsap.set(c, { opacity: 1, y: 0 }));
+
     let introPlayed = false;
     try { introPlayed = sessionStorage.getItem('hairholic_intro') === '1'; } catch {}
+    if (introPlayed) return;
 
-    // 再訪問時 or 初期表示スキップ：即時表示
-    if (introPlayed) {
-      cards.forEach(c => gsap.set(c, { opacity: 1, y: 0 }));
-      return;
-    }
-
-    const obs = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          const el = entry.target as HTMLElement;
-          const i  = parseInt(el.dataset.staffCard || "0");
-          gsap.fromTo(el,
-            { opacity: 0, y: 32 },
-            { opacity: 1, y: 0, duration: 0.75, delay: i * 0.1, ease: "power3.out" }
-          );
-          obs.unobserve(el);
-        });
-      },
-      { threshold: 0, rootMargin: "0px 0px 60px 0px" }
-    );
-
-    cards.forEach(c => {
+    // 初回訪問のみ：ビューポート外のカードだけスライドアニメーション
+    const cleanups: (() => void)[] = [];
+    cards.forEach((c, idx) => {
       const rect = c.getBoundingClientRect();
-      const alreadyVisible = rect.top < window.innerHeight && rect.bottom > 0;
-      if (alreadyVisible) {
-        // すでにビューポート内にある場合は即時アニメーション
-        const i = parseInt((c as HTMLElement).dataset.staffCard || "0");
-        gsap.fromTo(c,
-          { opacity: 0, y: 32 },
-          { opacity: 1, y: 0, duration: 0.75, delay: i * 0.1, ease: "power3.out" }
-        );
-      } else {
-        gsap.set(c, { opacity: 0, y: 32 });
+      if (rect.top >= window.innerHeight) {
+        gsap.set(c, { y: 32 });
+        const obs = new IntersectionObserver(([entry]) => {
+          if (!entry.isIntersecting) return;
+          gsap.to(c, { opacity: 1, y: 0, duration: 0.75, delay: idx * 0.1, ease: "power3.out" });
+          obs.disconnect();
+        }, { threshold: 0, rootMargin: "0px 0px 60px 0px" });
         obs.observe(c);
+        cleanups.push(() => obs.disconnect());
       }
     });
 
-    // フォールバック：1.5秒後も非表示なら強制表示
-    const fallback = setTimeout(() => {
-      cards.forEach(c => {
-        gsap.set(c, { opacity: 1, y: 0 });
-      });
-    }, 1500);
-
-    return () => { obs.disconnect(); clearTimeout(fallback); };
+    return () => cleanups.forEach(fn => fn());
   }, [staff]);
 
   if (staff.length === 0) return null;
