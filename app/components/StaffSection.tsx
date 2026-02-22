@@ -1,78 +1,58 @@
 "use client";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
 import { StaffMember } from "../types";
 
-// ── ポートレートカード ────────────────────────────────────────
+// ── ポートレートカード（GSAP不使用・CSS transitionのみ） ────────
 function StaffCard({ member, index }: { member: StaffMember; index: number }) {
-  const cardRef   = useRef<HTMLDivElement>(null);
-  const imgRef    = useRef<HTMLImageElement>(null);
-  const revealRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // PC：マウスホバー
-  const handleMouseEnter = () => {
-    if (!window.matchMedia("(hover: hover)").matches) return;
-    if (imgRef.current)    gsap.to(imgRef.current,   { filter: "grayscale(0%)",  duration: 0.55, ease: "power2.out" });
-    if (revealRef.current) gsap.to(revealRef.current, { maxHeight: 180, opacity: 1, duration: 0.45, ease: "power2.out" });
-  };
-
-  const handleMouseLeave = () => {
-    if (!window.matchMedia("(hover: hover)").matches) return;
-    if (imgRef.current)    gsap.to(imgRef.current,   { filter: "grayscale(100%)", duration: 0.55, ease: "power2.inOut" });
-    if (revealRef.current) gsap.to(revealRef.current, { maxHeight: 0, opacity: 0,  duration: 0.3,  ease: "power2.in" });
-  };
-
-  // SP：スクロールトリガー（タッチデバイスのみ）
+  // SP（タッチデバイス）：スクロールで視野内に入ったとき class を付与
   useEffect(() => {
     const card = cardRef.current;
-    const img  = imgRef.current;
-    const rev  = revealRef.current;
     if (!card) return;
-    // ホバー対応デバイスはスキップ（PC用ホバーを使う）
+    // hover 対応デバイス（PC）は CSS の :hover で制御するのでスキップ
     if (window.matchMedia("(hover: hover)").matches) return;
-
-    const hasContent = !!(member.specialty || member.comment);
 
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (img) gsap.to(img, { filter: "grayscale(0%)",  duration: 0.55, ease: "power2.out" });
-          if (rev && hasContent) gsap.to(rev, { maxHeight: 180, opacity: 1, duration: 0.45, ease: "power2.out" });
+          card.classList.add("staff-active");
         } else {
-          if (img) gsap.to(img, { filter: "grayscale(100%)", duration: 0.55, ease: "power2.inOut" });
-          if (rev) gsap.to(rev, { maxHeight: 0, opacity: 0, duration: 0.3, ease: "power2.in" });
+          card.classList.remove("staff-active");
         }
       },
       { threshold: 0.62 }
     );
-
     obs.observe(card);
     return () => obs.disconnect();
-  }, [member.specialty, member.comment]);
+  }, []);
 
   return (
     <div
       ref={cardRef}
       data-staff-card={String(index)}
+      className="staff-card"
       style={{ position: "relative", overflow: "hidden", aspectRatio: "3/4" }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      {/* ポートレート画像（グレースケール → カラー） */}
+      {/* ポートレート画像 */}
       {member.photo ? (
         <img
-          ref={imgRef}
           src={member.photo}
           alt={member.name}
+          className="staff-card-img"
           style={{
             width: "100%", height: "100%",
             objectFit: "cover", display: "block",
             filter: "grayscale(100%)",
+            transition: "filter 0.55s ease",
           }}
         />
       ) : (
-        <div style={{ width: "100%", height: "100%", background: "#181818", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,0.25)" strokeWidth="1.5">
+        <div style={{
+          width: "100%", height: "100%", background: "#1e1c19",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(212,175,55,0.3)" strokeWidth="1.5">
             <circle cx="12" cy="8" r="4" />
             <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
           </svg>
@@ -86,16 +66,20 @@ function StaffCard({ member, index }: { member: StaffMember; index: number }) {
         pointerEvents: "none",
       }} />
 
-      {/*
-        テキストオーバーレイ（bottom: 0 固定）
-        得意分野・コメントを【名前より先】に配置することで、
-        展開時にコンテナが上方向に伸び、名前・肩書は下に留まる。
-      */}
+      {/* テキストオーバーレイ */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 28px" }}>
 
-        {/* ① ホバー／スクロールで展開：得意分野 + コメント（名前の上） */}
+        {/* ホバー／スクロールで展開：得意分野 + コメント */}
         {(member.specialty || member.comment) && (
-          <div ref={revealRef} style={{ maxHeight: 0, opacity: 0, overflow: "hidden" }}>
+          <div
+            className="staff-reveal"
+            style={{
+              maxHeight: 0,
+              opacity: 0,
+              overflow: "hidden",
+              transition: "max-height 0.45s ease, opacity 0.35s ease",
+            }}
+          >
             <div style={{
               paddingBottom: "14px",
               marginBottom: "14px",
@@ -126,7 +110,7 @@ function StaffCard({ member, index }: { member: StaffMember; index: number }) {
           </div>
         )}
 
-        {/* ② 名前（常時表示・下部固定） */}
+        {/* 名前（常時表示） */}
         <h3 style={{
           fontFamily: "var(--cormorant-garamond), 'Cormorant Garamond', serif",
           fontSize: "clamp(1.5rem, 4vw, 2rem)",
@@ -139,7 +123,7 @@ function StaffCard({ member, index }: { member: StaffMember; index: number }) {
           {member.name}
         </h3>
 
-        {/* ③ 肩書（常時表示・最下部） */}
+        {/* 肩書（常時表示） */}
         <p style={{
           color: "oklch(0.78 0.12 75)",
           fontSize: "0.6rem",
@@ -159,47 +143,40 @@ function StaffCard({ member, index }: { member: StaffMember; index: number }) {
 interface Props { staff: StaffMember[] }
 
 export default function StaffSection({ staff }: Props) {
-  useEffect(() => {
-    if (staff.length === 0) return;
-    const cards = Array.from(document.querySelectorAll("[data-staff-card]")) as HTMLElement[];
-
-    // まず全カードを確実に表示状態にする（これが最優先）
-    cards.forEach(c => gsap.set(c, { opacity: 1, y: 0 }));
-
-    let introPlayed = false;
-    try { introPlayed = sessionStorage.getItem('hairholic_intro') === '1'; } catch {}
-    if (introPlayed) return;
-
-    // 初回訪問のみ：ビューポート外のカードだけスライドアニメーション
-    const cleanups: (() => void)[] = [];
-    cards.forEach((c, idx) => {
-      const rect = c.getBoundingClientRect();
-      if (rect.top >= window.innerHeight) {
-        gsap.set(c, { y: 32 });
-        const obs = new IntersectionObserver(([entry]) => {
-          if (!entry.isIntersecting) return;
-          gsap.to(c, { opacity: 1, y: 0, duration: 0.75, delay: idx * 0.1, ease: "power3.out" });
-          obs.disconnect();
-        }, { threshold: 0, rootMargin: "0px 0px 60px 0px" });
-        obs.observe(c);
-        cleanups.push(() => obs.disconnect());
-      }
-    });
-
-    return () => cleanups.forEach(fn => fn());
-  }, [staff]);
-
   if (staff.length === 0) return null;
 
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-      gap: "4px",
-    }}>
-      {staff.map((member, i) => (
-        <StaffCard key={member.id} member={member} index={i} />
-      ))}
-    </div>
+    <>
+      <style>{`
+        /* PC ホバー：グレースケール解除 + テキスト展開 */
+        @media (hover: hover) {
+          .staff-card:hover .staff-card-img {
+            filter: grayscale(0%) !important;
+          }
+          .staff-card:hover .staff-reveal {
+            max-height: 180px !important;
+            opacity: 1 !important;
+          }
+        }
+        /* SP スクロール：active クラス付与で同様の効果 */
+        .staff-card.staff-active .staff-card-img {
+          filter: grayscale(0%) !important;
+        }
+        .staff-card.staff-active .staff-reveal {
+          max-height: 180px !important;
+          opacity: 1 !important;
+        }
+      `}</style>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+        gap: "4px",
+      }}>
+        {staff.map((member, i) => (
+          <StaffCard key={member.id || i} member={member} index={i} />
+        ))}
+      </div>
+    </>
   );
 }
