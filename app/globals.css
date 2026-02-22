@@ -1,101 +1,180 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer utilities {
-  .bg-black-card    { background-color: #141414; }
-  .bg-black-soft    { background-color: #1a1a1a; }
-  .bg-black-deep    { background-color: #0d0d0d; }
-  .text-gold        { color: #d4af37; }
-  .text-gold-soft   { color: #c9a961; }
-  .border-gold      { border-color: #d4af37; }
-  .border-gold-soft { border-color: #c9a961; }
-  .border-border-strong { border-color: #2a2a2a; }
-  .border-border-soft   { border-color: #3a3a3a; }
-  .hover\:border-gold-soft:hover { border-color: #c9a961; }
-  .font-cormorant   { font-family: var(--font-cormorant), serif; }
+/* ─────────────────────────────────────────────────────
+   Tailwind v4 テーマ定義
+   ───────────────────────────────────────────────────── */
+@theme {
+  --color-background:           oklch(0.13 0.005 60);
+  --color-foreground:           oklch(0.93 0.01  80);
+  --color-card:                 oklch(0.17 0.005 60);
+  --color-card-foreground:      oklch(0.93 0.01  80);
+  --color-primary:              oklch(0.78 0.12  75);
+  --color-primary-foreground:   oklch(0.13 0.005 60);
+  --color-secondary:            oklch(0.22 0.005 60);
+  --color-secondary-foreground: oklch(0.85 0.03  75);
+  --color-muted:                oklch(0.20 0.005 60);
+  --color-muted-foreground:     oklch(0.60 0.02  70);
+  --color-accent:               oklch(0.78 0.12  75);
+  --color-accent-foreground:    oklch(0.13 0.005 60);
+  --color-border:               oklch(0.28 0.01  60);
+  --color-input:                oklch(0.22 0.005 60);
+  --color-ring:                 oklch(0.78 0.12  75);
+
+  --font-sans:  var(--noto-jp),            'Noto Sans JP',       sans-serif;
+  --font-serif: var(--cormorant-garamond), 'Cormorant Garamond', serif;
+
+  --radius: 0.25rem;
 }
 
-/* ---------------------------------------
-   RESET
---------------------------------------- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-  overflow-x: hidden;
-}
-
-body {
-  background: #0d0d0d;
-  color: #f5f5f5;
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  line-height: 1.7;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ---------------------------------------
-   COLOR SYSTEM
---------------------------------------- */
+/* ─────────────────────────────────────────────────────
+   後方互換 CSS 変数（インラインスタイル・GSAP用）
+   ───────────────────────────────────────────────────── */
 :root {
-  --black-deep: #0d0d0d;
-  --black-soft: #1a1a1a;
-  --black-card: #141414;
-
-  --gold: #d4af37;
-  --gold-soft: #c9a961;
-  --gold-light: #e8c547;
-
-  --border-strong: #2a2a2a;
-  --border-soft: #3a3a3a;
+  --gold:          oklch(0.78 0.12 75);
+  --gold-soft:     oklch(0.73 0.10 72);
+  --gold-light:    oklch(0.83 0.14 78);
+  --black-deep:    oklch(0.13 0.005 60);
+  --black-soft:    oklch(0.20 0.005 60);
+  --black-card:    oklch(0.17 0.005 60);
+  --border-strong: oklch(0.22 0.005 60);
+  --border-soft:   oklch(0.28 0.01  60);
 }
 
-/* ---------------------------------------
-   TYPOGRAPHY
---------------------------------------- */
-h1, h2, h3, h4 {
-  font-family: var(--font-heading), serif;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
+/* ─────────────────────────────────────────────────────
+   BASE LAYER
+   ※ @layer base はレイヤー内なので Tailwind ユーティリティ
+     (@layer utilities) に負ける → px-6 等が正常に効く
+   ───────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: oklch(0.13 0.005 60);
+    color: oklch(0.93 0.01 80);
+    font-family: var(--font-sans), 'Noto Sans JP', sans-serif;
+    line-height: 1.8;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif), 'Cormorant Garamond', serif;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+
+  /* ヘッダー：常に透明 border を持ち border-color だけを遷移させる（white flash を防ぐ） */
+  header {
+    border-bottom: 1px solid transparent;
+    transition: background-color 300ms ease, backdrop-filter 300ms ease,
+                -webkit-backdrop-filter 300ms ease, border-color 300ms ease;
+  }
 }
 
-h1 {
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  font-weight: 600;
-  letter-spacing: 0.05em;
+/* ─────────────────────────────────────────────────────
+   COMPONENTS LAYER
+   ───────────────────────────────────────────────────── */
+@layer components {
+  /* スクロール後ヘッダー背景 */
+  header.header-scrolled {
+    background-color: oklch(0.13 0.005 60 / 0.78) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom-color: oklch(0.28 0.01 60) !important; /* border は常在、color だけ変える */
+  }
+
+  /* コンテナ（レガシー） */
+  .container {
+    width: min(1200px, 90%);
+    margin: 0 auto;
+    padding: 60px 0;
+  }
 }
 
-h2 {
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  font-weight: 600;
+/* ─────────────────────────────────────────────────────
+   UTILITIES LAYER
+   ───────────────────────────────────────────────────── */
+@layer utilities {
+  /* 奥行き / パララックス */
+  [data-menu-row],
+  [data-staff-card] > div,
+  .gallery-item {
+    transform-style: preserve-3d;
+  }
+
+  [data-menu-row]:hover {
+    transform: perspective(900px) translateY(-2px);
+  }
+
+  /* レガシーカラーユーティリティ */
+  .bg-black-card    { background-color: oklch(0.17 0.005 60); }
+  .bg-black-soft    { background-color: oklch(0.20 0.005 60); }
+  .bg-black-deep    { background-color: oklch(0.13 0.005 60); }
+  .text-gold        { color: oklch(0.78 0.12 75); }
+  .text-gold-soft   { color: oklch(0.73 0.10 72); }
+  .border-gold      { border-color: oklch(0.78 0.12 75); }
+  .border-gold-soft { border-color: oklch(0.73 0.10 72); }
+  .font-cormorant   { font-family: var(--font-serif), 'Cormorant Garamond', serif; }
+
+  /* ── ハンバーガーアイコン ── */
+  .hamburger-btn span {
+    transition: opacity 0.2s ease;
+  }
+  .hamburger-btn:hover span {
+    opacity: 0.6;
+  }
+
+  /* ── メニューナビホバー ── */
+  .menu-nav-label {
+    display: inline-block;
+    transition: transform 0.25s ease;
+  }
+  .menu-nav-index {
+    opacity: 0.35;
+    transition: opacity 0.25s ease;
+  }
+  .menu-nav-link {
+    transition: color 0.25s ease;
+  }
+  .menu-nav-link:hover {
+    color: oklch(0.78 0.12 75);
+  }
+  .menu-nav-link:hover .menu-nav-label {
+    transform: translateX(10px);
+  }
+  .menu-nav-link:hover .menu-nav-index {
+    opacity: 1;
+  }
 }
 
-h3 {
-  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
-  font-weight: 600;
+/* ─────────────────────────────────────────────────────
+   REDUCED MOTION
+   ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-p {
-  opacity: 0.85;
-  font-size: 1rem;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+/* ─────────────────────────────────────────────────────
+   GLOBAL ANIMATIONS
+   ───────────────────────────────────────────────────── */
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.78 0.12 75 / 0.35); }
+  50%       { box-shadow: 0 0 0 10px oklch(0.78 0.12 75 / 0); }
 }
 
-/* ---------------------------------------
-   LAYOUT
---------------------------------------- */
-.container {
-  width: min(1200px, 90%);
-  margin: 0 auto;
-  padding: 60px 0;
+#reservation .reserve-cta {
+  animation: pulse-gold 2.8s ease-in-out infinite;
 }
-

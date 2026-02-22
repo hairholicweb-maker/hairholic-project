@@ -72,6 +72,7 @@ export interface StaffMember {
   comment?: string;
   photo?: string;
   order?: number;
+  location?: string;
 }
 
 export interface AccessInfo {
@@ -84,4 +85,10 @@ export interface AccessInfo {
   notes: string;
   mapEmbedSrc: string;
   mapLink: string;
+}
+
+// top-page 統合API: news_list 用（将来のニュースセクション）
+export interface NewsItem {
+  date: string;
+  content: string;
 }

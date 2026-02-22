@@ -6,6 +6,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ["var(--font-serif)", "Cormorant Garamond", "serif"],
+        sans:  ["var(--font-sans)",  "Noto Sans JP",       "sans-serif"],
+      },
+      // 後方互換カラー（既存インラインスタイルとの共存用）
       colors: {
         "black-deep":    "#0d0d0d",
         "black-soft":    "#1a1a1a",
@@ -16,9 +21,8 @@ module.exports = {
         "border-strong": "#2a2a2a",
         "border-soft":   "#3a3a3a",
       },
-      fontFamily: {
-        playfair: ["var(--font-playfair)", "serif"],
-        inter:    ["var(--font-inter)", "sans-serif"],
+      tracking: {
+        "widest-xl": "0.4em",
       },
     },
   },
