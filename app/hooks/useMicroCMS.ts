@@ -139,6 +139,7 @@ export function useMenuCategoriesCMS() {
     if (!isCmsReady()) return;
     fetchMenuList().then(contents => {
       if (contents.length === 0) return;
+      const np = (p: string) => p.replace(/\\/g, "¥");
       const cats: MenuCategoryCMS[] = contents.map((c: any) => ({
         id:            c.id            ?? c.categoryKey ?? "",
         categoryKey:   c.categoryKey   ?? "",
@@ -147,7 +148,7 @@ export function useMenuCategoriesCMS() {
         items: (c.items ?? []).map((item: any) => ({
           fieldId: item.fieldId ?? item.id ?? undefined,
           title:   item.title   ?? "",
-          price:   item.price   ?? "",
+          price:   np(item.price ?? ""),
           comment: item.comment ?? undefined,
           rank:    item.rank != null && item.rank !== "" ? Number(item.rank) || undefined : undefined,
           image:   item.image   ?? undefined,
@@ -176,7 +177,7 @@ export function useRankingCourses() {
             id:          c.id          ?? String(i),
             rank:        c.rank        ?? i + 1,
             title:       c.title       ?? "",
-            price:       c.price       ?? "",
+            price:       (c.price ?? "").replace(/\\/g, "¥"),
             description: c.description ?? "",
             categoryKey: c.categoryKey ?? undefined,
             comment:     c.comment     ?? undefined,
@@ -213,13 +214,14 @@ export function useRankingFromPickup() {
     if (!isCmsReady()) { setLoading(false); return; }
     fetchPickup()
       .then(d => {
+        const normalizePrice = (p: string) => p.replace(/\\/g, "¥");
         const toItem = (raw: any, rank: number): RankingCourse | null => {
           if (!raw || !raw.id) return null;
           return {
             id:          raw.id,
             rank,
             title:       raw.title       ?? "",
-            price:       raw.price       ?? "",
+            price:       normalizePrice(raw.price ?? ""),
             description: raw.description ?? "",
             image:       typeof raw.image === "string"
                            ? raw.image
@@ -260,7 +262,7 @@ export function useRankingFromMenu() {
                 id:          `${cat.id ?? cat.categoryKey}-${i}`,
                 rank:        r,
                 title:       item.title   ?? "",
-                price:       item.price   ?? "",
+                price:       (item.price ?? "").replace(/\\/g, "¥"),
                 description: item.comment ?? "",
                 categoryKey: cat.categoryKey ?? undefined,
                 image:       typeof item.image === "string"
