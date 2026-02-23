@@ -148,7 +148,7 @@ export function useMenuCategoriesCMS() {
           title:   item.title   ?? "",
           price:   item.price   ?? "",
           comment: item.comment ?? undefined,
-          rank:    typeof item.rank === "number" ? item.rank : undefined,
+          rank:    item.rank != null && item.rank !== "" ? Number(item.rank) || undefined : undefined,
           image:   item.image   ?? undefined,
         })),
       }));
@@ -204,7 +204,7 @@ export function useRankingFromMenu() {
         const ranked: RankingCourse[] = [];
         contents.forEach((cat: any) => {
           (cat.items ?? []).forEach((item: any, i: number) => {
-            const r = typeof item.rank === "number" ? item.rank : undefined;
+            const r = item.rank != null && item.rank !== "" ? Number(item.rank) || undefined : undefined;
             if (r && r >= 1 && r <= 3) {
               ranked.push({
                 id:          `${cat.id ?? cat.categoryKey}-${i}`,
