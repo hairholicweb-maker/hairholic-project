@@ -139,7 +139,7 @@ export function useMenuCategoriesCMS() {
     if (!isCmsReady()) return;
     fetchMenuList().then(contents => {
       if (contents.length === 0) return;
-      const np = (p: string) => p.replace(/\\/g, "¥");
+      const np = (p: string) => p.replace(/[\\\/]/g, "¥");
       const cats: MenuCategoryCMS[] = contents.map((c: any) => ({
         id:            c.id            ?? c.categoryKey ?? "",
         categoryKey:   c.categoryKey   ?? "",
@@ -177,7 +177,7 @@ export function useRankingCourses() {
             id:          c.id          ?? String(i),
             rank:        c.rank        ?? i + 1,
             title:       c.title       ?? "",
-            price:       (c.price ?? "").replace(/\\/g, "¥"),
+            price:       (c.price ?? "").replace(/[\\\/]/g, "¥"),
             description: c.description ?? "",
             categoryKey: c.categoryKey ?? undefined,
             comment:     c.comment     ?? undefined,
@@ -214,7 +214,7 @@ export function useRankingFromPickup() {
     if (!isCmsReady()) { setLoading(false); return; }
     fetchPickup()
       .then(d => {
-        const normalizePrice = (p: string) => p.replace(/\\/g, "¥");
+        const normalizePrice = (p: string) => p.replace(/[\\\/]/g, "¥");
         const toItem = (raw: any, rank: number): RankingCourse | null => {
           if (!raw || !raw.id) return null;
           return {
@@ -262,7 +262,7 @@ export function useRankingFromMenu() {
                 id:          `${cat.id ?? cat.categoryKey}-${i}`,
                 rank:        r,
                 title:       item.title   ?? "",
-                price:       (item.price ?? "").replace(/\\/g, "¥"),
+                price:       (item.price ?? "").replace(/[\\\/]/g, "¥"),
                 description: item.comment ?? "",
                 categoryKey: cat.categoryKey ?? undefined,
                 image:       typeof item.image === "string"
