@@ -148,6 +148,7 @@ export function useMenuCategoriesCMS() {
           title:   item.title   ?? "",
           price:   item.price   ?? "",
           comment: item.comment ?? undefined,
+          rank:    typeof item.rank === "number" ? item.rank : undefined,
           image:   item.image   ?? undefined,
         })),
       }));
@@ -181,6 +182,46 @@ export function useRankingCourses() {
             image:       typeof c.image === "string" ? c.image : c.image?.url ?? undefined,
           }));
           setCourses(normalized);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return { courses, loading };
+}
+
+// ─── メニューのrankフィールドからランキングを生成 ───────────────
+// menu API の各アイテムの rank(1〜3) を読んでランキングとして返す
+export function useRankingFromMenu() {
+  const [courses, setCourses] = useState<RankingCourse[]>(rankingCoursesDefault);
+  const [loading, setLoading] = useState(!isCmsReady());
+
+  useEffect(() => {
+    if (!isCmsReady()) { setLoading(false); return; }
+    fetchMenuList()
+      .then(contents => {
+        const ranked: RankingCourse[] = [];
+        contents.forEach((cat: any) => {
+          (cat.items ?? []).forEach((item: any, i: number) => {
+            const r = typeof item.rank === "number" ? item.rank : undefined;
+            if (r && r >= 1 && r <= 3) {
+              ranked.push({
+                id:          `${cat.id ?? cat.categoryKey}-${i}`,
+                rank:        r,
+                title:       item.title   ?? "",
+                price:       item.price   ?? "",
+                description: item.comment ?? "",
+                categoryKey: cat.categoryKey ?? undefined,
+                image:       typeof item.image === "string"
+                               ? item.image
+                               : item.image?.url ?? undefined,
+              });
+            }
+          });
+        });
+        if (ranked.length > 0) {
+          setCourses(ranked.sort((a, b) => a.rank - b.rank));
         }
         setLoading(false);
       })

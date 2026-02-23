@@ -24,6 +24,7 @@ export interface MenuItemCMS {
   title: string;
   price: string;
   comment?: string;
+  rank?: number;
   image?: {
     url: string;
     width: number;

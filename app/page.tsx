@@ -6,7 +6,7 @@ import StaffSection from "./components/StaffSection";
 import FloatingReserveButton from "./components/FloatingReserveButton";
 import {
   useStaff,
-  useRankingCourses,
+  useRankingFromMenu,
   useSiteSettings,
   useAbout,
   useMenuCategoriesCMS,
@@ -51,7 +51,7 @@ export default function Page() {
   const { settings } = useSiteSettings();
   const { about } = useAbout();
   const { menuCats } = useMenuCategoriesCMS();
-  const { courses } = useRankingCourses();
+  const { courses } = useRankingFromMenu();
   const { staff } = useStaff();
   const { access } = useAccess();
 
