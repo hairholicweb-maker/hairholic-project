@@ -48,6 +48,7 @@ const isCmsReady = () => !!(MICROCMS_API_KEY && MICROCMS_SERVICE_DOMAIN);
 let _topPagePromise: Promise<Record<string, unknown>> | null = null;
 let _menuPromise:    Promise<any[]>                   | null = null;
 let _rankingPromise: Promise<any[]>                   | null = null;
+let _pickupPromise:  Promise<Record<string, unknown>> | null = null;
 
 function fetchTopPage(): Promise<Record<string, unknown>> {
   if (!_topPagePromise) {
@@ -183,6 +184,55 @@ export function useRankingCourses() {
           }));
           setCourses(normalized);
         }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  return { courses, loading };
+}
+
+// ─── pickup API（オブジェクト型 rank1/rank2/rank3 コンテンツ参照） ──
+function fetchPickup(): Promise<Record<string, unknown>> {
+  if (!_pickupPromise) {
+    _pickupPromise = fetch(apiUrl("pickup?depth=2"), { headers: headers() })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<Record<string, unknown>>;
+      })
+      .catch(() => ({}));
+  }
+  return _pickupPromise;
+}
+
+export function useRankingFromPickup() {
+  const [courses, setCourses] = useState<RankingCourse[]>(rankingCoursesDefault);
+  const [loading, setLoading] = useState(!isCmsReady());
+
+  useEffect(() => {
+    if (!isCmsReady()) { setLoading(false); return; }
+    fetchPickup()
+      .then(d => {
+        const toItem = (raw: any, rank: number): RankingCourse | null => {
+          if (!raw || !raw.id) return null;
+          return {
+            id:          raw.id,
+            rank,
+            title:       raw.title       ?? "",
+            price:       raw.price       ?? "",
+            description: raw.description ?? "",
+            image:       typeof raw.image === "string"
+                           ? raw.image
+                           : raw.image?.url ?? undefined,
+          };
+        };
+        const ranked = [
+          toItem(d.rank1, 1),
+          toItem(d.rank2, 2),
+          toItem(d.rank3, 3),
+        ].filter((c): c is RankingCourse => c !== null);
+
+        if (ranked.length > 0) setCourses(ranked);
         setLoading(false);
       })
       .catch(() => setLoading(false));
