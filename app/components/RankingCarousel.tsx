@@ -349,7 +349,7 @@ export default function RankingCarousel({ courses }: Props) {
                   }}>
                     <span style={{
                       fontFamily: "var(--font-cormorant), serif",
-                      color: "#d4af37", fontSize: "1.3rem", fontWeight: 600, letterSpacing: "0.03em",
+                      color: "#d4af37", fontSize: "1.3rem", fontWeight: 400, letterSpacing: "0.03em",
                     }}>{course.price}</span>
                     <span style={{ color: "#666", fontSize: "0.6rem", letterSpacing: "0.05em" }}>（税込）</span>
                   </div>
@@ -539,7 +539,7 @@ export default function RankingCarousel({ courses }: Props) {
               }}>
                 <span style={{
                   fontFamily: "var(--font-cormorant), serif",
-                  color: "#d4af37", fontSize: "1.5rem", fontWeight: 600, letterSpacing: "0.03em",
+                  color: "#d4af37", fontSize: "1.5rem", fontWeight: 400, letterSpacing: "0.03em",
                   pointerEvents: "none",
                 }}>{c.price}</span>
                 <span style={{ color: "#666", fontSize: "0.65rem", pointerEvents: "none" }}>（税込）</span>
